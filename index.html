@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>EchoChrono</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1d4e89">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#eef2f6;--ink:#10243e;--mute:#566a80;--work:#1d4e89;--workink:#fff;--off:#fff;--line:#cfd9e4;--amber:#f2a900;color-scheme:light dark}
+@media(prefers-color-scheme:dark){:root{--bg:#0d1620;--ink:#e8eef5;--mute:#93a4b8;--work:#3b82c4;--workink:#06121f;--off:#16222f;--line:#2a3b4f}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 "Avenir Next","Segoe UI",system-ui,sans-serif;padding:env(safe-area-inset-top) 16px calc(28px + env(safe-area-inset-bottom))}
+main{max-width:520px;margin:0 auto}
+.agency{margin:14px 0 0;padding:10px 14px;border-radius:8px;background:var(--work);color:var(--workink);font-weight:800;letter-spacing:1.5px;text-align:center}
+.tabs{display:flex;gap:6px;margin:14px 0 6px}
+.tabs button{flex:1;font-weight:700}
+.tabs button[aria-pressed=true]{background:var(--work);color:var(--workink);border-color:var(--work)}
+.tot{display:flex;gap:10px;margin:14px 0 6px}
+.tot div{flex:1;background:var(--off);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.tot b{display:block;font-size:22px;line-height:1.15}
+.tot span{font-size:13px;color:var(--mute)}
+.two{display:flex;gap:10px}.two>div{flex:1}
+h2{font-size:15px;color:var(--mute);margin:20px 0 0;font-weight:600}
+.tr{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.tr span{color:var(--mute);font-size:14px}
+.hrs{font-weight:700;white-space:nowrap}
+.tr button{min-height:36px;padding:0 10px;font-size:14px}
+h1{font-size:15px;font-weight:600;color:var(--mute);margin:18px 0 2px}
+.now{font-size:42px;line-height:1.05;font-weight:800;margin:0;letter-spacing:-.5px}
+.next{color:var(--mute);margin:6px 0 20px}
+.mh{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.mh b{flex:1;font-size:18px}
+button{font:inherit;min-height:44px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--off);color:var(--ink);cursor:pointer}
+button.main{background:var(--work);color:var(--workink);border-color:var(--work);font-weight:700}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.grid,.dow{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.dow span{font-size:12px;color:var(--mute);text-align:center;padding-bottom:2px}
+.c{aspect-ratio:1/1.05;border-radius:8px;padding:4px 5px;display:flex;flex-direction:column;justify-content:space-between;border:1px solid var(--line)}
+.c i{font-style:normal;font-size:15px;font-weight:700}
+.c b{font-weight:600;font-size:11px}
+.c.on{background:var(--work);color:var(--workink);border-color:var(--work)}
+.c.off{background:var(--off)}
+.c{min-height:0;width:100%;text-align:left}
+.c.ch{border:2px dashed var(--ink)}
+.c.today{outline:3px solid var(--amber);outline-offset:1px}
+dialog{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:18px;width:min(320px,90vw)}
+dialog p{margin:0 0 14px;font-weight:600}
+dialog button{display:block;width:100%;margin-top:8px}
+.key{display:flex;gap:16px;font-size:13px;color:var(--mute);margin:10px 0 0}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:5px;border:1px solid var(--line)}
+.sw.on{background:var(--work);border-color:var(--work)}.sw.off{background:var(--off)}
+details{margin-top:22px;border-top:1px solid var(--line);padding-top:6px}
+summary{min-height:44px;display:flex;align-items:center;font-weight:700;cursor:pointer}
+label{display:block;margin:12px 0 4px;font-weight:600}
+select,input{width:100%;min-height:44px;font:inherit;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:var(--off);color:var(--ink)}
+.hint{color:var(--mute);font-size:14px;margin:8px 0 12px}
+#msg{color:var(--mute);min-height:1.4em;margin:8px 0 0}
+</style>
+</head>
+<body>
+<main>
+<p class="agency" id="agency"></p>
+<h1>EchoChrono</h1>
+<div class="tabs"><button id="tabS" aria-pressed="true">Schedule</button><button id="tabT" aria-pressed="false">Training</button></div>
+<div id="vSched">
+<p class="now" id="now"></p>
+<p class="next" id="next"></p>
+<p class="next" id="nextTr" hidden></p>
+
+<section aria-label="Calendar">
+  <div class="mh">
+    <button id="prev" aria-label="Previous month">&lsaquo;</button>
+    <b id="mlabel"></b>
+    <button id="tod">Today</button>
+    <button id="nxt" aria-label="Next month">&rsaquo;</button>
+  </div>
+  <div class="dow"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+  <div class="grid" id="grid"></div>
+  <p class="key"><span><i class="sw on"></i>Work</span><span><i class="sw off"></i>Off</span><span>* Changed day</span></p>
+  <p class="hint">Tap a day to mark overtime or a day off.</p>
+</section>
+
+<dialog id="dlg"><p id="dtitle"></p><button class="main" id="dflip"></button><button id="dclose">Close</button></dialog>
+
+<details id="setup">
+  <summary>Schedule setup</summary>
+  <label for="agencyIn">Name shown on top (optional)</label>
+  <input id="agencyIn" maxlength="40" autocomplete="off">
+  <label for="preset">Pattern</label>
+  <select id="preset"></select>
+  <div id="cwrap">
+    <label for="custom">Your pattern (D day, N night, W work, O off)</label>
+    <input id="custom" maxlength="60" placeholder="DDOONNNOODDOOO" autocapitalize="characters" autocomplete="off">
+  </div>
+  <div id="shwrap"><label for="shift">Work days are</label><select id="shift"><option value="W">Not labeled</option><option value="D">Day shift</option><option value="N">Night shift</option></select></div>
+  <div class="two"><div><label for="dayS">Day shift start</label><input type="time" id="dayS"></div><div><label for="dayE">Day shift end</label><input type="time" id="dayE"></div></div>
+  <div class="two"><div><label for="nightS">Night shift start</label><input type="time" id="nightS"></div><div><label for="nightE">Night shift end</label><input type="time" id="nightE"></div></div>
+  <label for="start">Day 1 of the pattern</label>
+  <input type="date" id="start">
+  <p class="hint" id="hint"></p>
+  <button class="main" id="save">Save schedule</button>
+  <p id="msg" role="status"></p>
+</details>
+</div>
+<div id="vTrain" hidden>
+  <div class="tot"><div><b id="tAll">0 min</b><span>All trainings</span></div><div><b id="tDone">0 min</b><span>Completed</span></div></div>
+  <p class="hint" id="tYears"></p>
+  <label for="tTitle">Training name</label>
+  <input id="tTitle" maxlength="60" autocomplete="off" placeholder="Training or reminder">
+  <label for="tDate">Date</label>
+  <input type="date" id="tDate">
+  <div class="two"><div><label for="tStart">Start time</label><input type="time" id="tStart"></div><div><label for="tEnd">End time</label><input type="time" id="tEnd"></div></div>
+  <p class="hint">If it ends after midnight, the app counts it as ending the next day.</p>
+  <button class="main" id="tAdd">Add training</button>
+  <p id="tMsg" role="status" class="hint"></p>
+  <div id="tList"></div>
+</div>
+</main>
+
+<script>
+const PRE={'2-2-3 (12-hour)':'WWOOWWWOOWWOOO','4 on, 4 off':'WWWWOOOO','Custom pattern':''};
+const CUSTOM='Custom pattern', KEY='echochrono1';
+const $=id=>document.getElementById(id), pad=n=>String(n).padStart(2,'0');
+const dn=(y,m,d)=>Math.round(Date.UTC(y,m,d)/864e5);
+const clean=s=>(s||'').toUpperCase().replace(/[^WDNO]/g,'');
+
+let S=null, saved=false;
+try{ S=JSON.parse(localStorage.getItem(KEY)); saved=!!S&&typeof S.start==='string'&&!!PRE.hasOwnProperty(S.preset); }catch(e){}
+const T=new Date(), today={y:T.getFullYear(),m:T.getMonth(),d:T.getDate()};
+if(!saved){
+  const mon=new Date(today.y,today.m,today.d-((T.getDay()+6)%7));
+  S={preset:'2-2-3 (12-hour)',custom:'',start:mon.getFullYear()+'-'+pad(mon.getMonth()+1)+'-'+pad(mon.getDate())};
+}
+if(S.agency===undefined) S.agency='KENDALL COUNTY SHERIFF';
+S.shift=S.shift||'W'; S.dayS=S.dayS||'06:00'; S.dayE=S.dayE||'18:00'; S.nightS=S.nightS||'18:00'; S.nightE=S.nightE||'06:00';
+const pat=()=>S.preset===CUSTOM?clean(S.custom):(PRE[S.preset]||'').replace(/W/g,S.shift||'W');
+
+function sched(y,m,d){
+  const p=pat(); if(!p||!S.start) return 'O';
+  const [sy,sm,sd]=S.start.split('-').map(Number), L=p.length, n=dn(y,m,d)-dn(sy,sm-1,sd);
+  return p[((n%L)+L)%L];
+}
+const work=(y,m,d)=>sched(y,m,d)!=='O';
+const fmt=(y,m,d)=>new Date(y,m,d).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+const OK='echochrono1o'; let O={};
+try{ O=JSON.parse(localStorage.getItem(OK))||{}; }catch(e){}
+const key=(y,m,d)=>{const t=new Date(y,m,d);return t.getFullYear()+'-'+pad(t.getMonth()+1)+'-'+pad(t.getDate());};
+const LBL={D:'Day',N:'Night',W:'Work',O:'Off'};
+function kind(y,m,d){ const s=sched(y,m,d); if(!O[key(y,m,d)]) return s; return s==='O'?(S.shift||'W'):'O'; }
+const eff=(y,m,d)=>kind(y,m,d)!=='O';
+const shiftTxt=k=>k==='D'?'Day shift, '+t12(S.dayS)+' to '+t12(S.dayE):k==='N'?'Night shift, '+t12(S.nightS)+' to '+t12(S.nightE):'';
+let vm={y:today.y,m:today.m};
+
+function render(){
+  $('agency').textContent=S.agency; $('agency').hidden=!S.agency;
+  const w=eff(today.y,today.m,today.d);
+  $('now').textContent=w?'Working today':'Off today';
+  let f=0; for(let k=1;k<=90;k++){ if(eff(today.y,today.m,today.d+k)!==w){f=k;break;} }
+  const sh=w?shiftTxt(kind(today.y,today.m,today.d)):'';
+  $('next').textContent=(sh?sh+'. ':'')+(f?(w?'Next day off: ':'Back to work: ')+fmt(today.y,today.m,today.d+f):'');
+  const nt=sortTr().find(r=>endTs(r)>Date.now());
+  $('nextTr').hidden=!nt; if(nt) $('nextTr').textContent='Next training: '+nt.title+', '+dfmt(nt.date)+', '+t12(nt.start)+' to '+t12(nt.end)+' ('+hm(dur(nt))+')';
+  $('mlabel').textContent=new Date(vm.y,vm.m,1).toLocaleDateString(undefined,{month:'long',year:'numeric'});
+  const first=new Date(vm.y,vm.m,1).getDay(), days=new Date(vm.y,vm.m+1,0).getDate();
+  let h=''; for(let i=0;i<first;i++) h+='<span></span>';
+  for(let d=1;d<=days;d++){
+    const k=kind(vm.y,vm.m,d), on=k!=='O', ch=!!O[key(vm.y,vm.m,d)], t=vm.y===today.y&&vm.m===today.m&&d===today.d;
+    h+='<button class="c '+(on?'on':'off')+(ch?' ch':'')+(t?' today':'')+'" data-d="'+d+'" aria-label="'+fmt(vm.y,vm.m,d)+', '+(on?'working'+(k==='D'?', day shift':k==='N'?', night shift':''):'off')+(ch?', changed':'')+(t?', today':'')+'"><i>'+d+'</i><b>'+LBL[k]+(ch?'*':'')+'</b></button>';
+  }
+  $('grid').innerHTML=h;
+}
+
+const sel=$('preset'); Object.keys(PRE).forEach(k=>sel.add(new Option(k,k)));
+function sync(){
+  const c=sel.value===CUSTOM, p=c?clean($('custom').value):PRE[sel.value];
+  $('cwrap').hidden=!c; $('shwrap').hidden=c;
+  $('hint').textContent=(p?'Repeats every '+p.length+' days. ':'')+
+    (sel.value.indexOf('2-2-3')===0?'Day 1 is a Monday that starts a week where you work Monday and Tuesday (then Friday to Sunday).':'Day 1 is the first day of your pattern.');
+}
+function fill(){ $('agencyIn').value=S.agency; $('shift').value=S.shift; $('dayS').value=S.dayS; $('dayE').value=S.dayE; $('nightS').value=S.nightS; $('nightE').value=S.nightE; sel.value=S.preset; $('custom').value=S.custom||''; $('start').value=S.start; sync(); }
+
+sel.onchange=sync; $('custom').oninput=sync;
+$('save').onclick=()=>{
+  const c=sel.value===CUSTOM, p=c?clean($('custom').value):PRE[sel.value], st=$('start').value;
+  if(c&&!(/[WDN]/.test(p)&&p.includes('O'))){ $('msg').textContent='Use D (day), N (night) or W for work days and O for off days, with at least one of each.'; return; }
+  if(!st){ $('msg').textContent='Pick the date for day 1 of your pattern.'; return; }
+  S={preset:sel.value,custom:c?p:'',start:st,agency:$('agencyIn').value.trim(),shift:$('shift').value,dayS:$('dayS').value||'06:00',dayE:$('dayE').value||'18:00',nightS:$('nightS').value||'18:00',nightE:$('nightE').value||'06:00'};
+  try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){}
+  $('msg').textContent='Saved.'; vm={y:today.y,m:today.m}; render(); $('setup').open=false;
+};
+const go=n=>{ const d=new Date(vm.y,vm.m+n,1); vm={y:d.getFullYear(),m:d.getMonth()}; render(); };
+$('prev').onclick=()=>go(-1); $('nxt').onclick=()=>go(1);
+$('tod').onclick=()=>{ vm={y:today.y,m:today.m}; render(); };
+
+const TK='echochrono1t'; let TR=[];
+try{ TR=JSON.parse(localStorage.getItem(TK))||[]; if(!Array.isArray(TR)) TR=[]; }catch(e){ TR=[]; }
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const mins=t=>{const a=t.split(':').map(Number);return a[0]*60+a[1];};
+const dur=r=>{let x=mins(r.end)-mins(r.start); if(x<0) x+=1440; return x;};
+const hm=x=>{const h=Math.floor(x/60),m=x%60;return ((h?h+' hr'+(h===1?'':'s'):'')+(h&&m?' ':'')+(m?m+' min':''))||'0 min';};
+const t12=t=>{const a=t.split(':').map(Number);return ((a[0]+11)%12+1)+':'+pad(a[1])+' '+(a[0]<12?'AM':'PM');};
+const dfmt=s=>{const a=s.split('-').map(Number);return new Date(a[0],a[1]-1,a[2]).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'});};
+const endTs=r=>{const a=r.date.split('-').map(Number),b=r.end.split(':').map(Number),t=new Date(a[0],a[1]-1,a[2],b[0],b[1]);if(mins(r.end)<mins(r.start)) t.setDate(t.getDate()+1);return t.getTime();};
+const sortTr=()=>TR.slice().sort((a,b)=>(a.date+a.start).localeCompare(b.date+b.start));
+const saveTr=()=>{ try{ localStorage.setItem(TK,JSON.stringify(TR)); }catch(e){} };
+function trRow(r){
+  return '<div class="tr"><div><b>'+esc(r.title)+'</b><br><span>'+dfmt(r.date)+', '+t12(r.start)+' to '+t12(r.end)+(mins(r.end)<mins(r.start)?' (ends next day)':'')+'</span></div><div class="hrs">'+hm(dur(r))+'</div><button data-x="'+esc(r.id)+'" aria-label="Remove '+esc(r.title)+'">Remove</button></div>';
+}
+function renderTrain(){
+  const now=Date.now(), L=sortTr(); let all=0, done=0; const Y={};
+  L.forEach(r=>{ const x=dur(r); all+=x; if(endTs(r)<=now) done+=x; const y=r.date.slice(0,4); Y[y]=(Y[y]||0)+x; });
+  $('tAll').textContent=hm(all); $('tDone').textContent=hm(done);
+  const ys=Object.keys(Y).sort(); $('tYears').textContent=ys.length>1?'By year: '+ys.map(y=>y+' = '+hm(Y[y])).join(', '):'';
+  const up=L.filter(r=>endTs(r)>now), past=L.filter(r=>endTs(r)<=now).reverse();
+  $('tList').innerHTML=((up.length?'<h2>Upcoming</h2>'+up.map(trRow).join(''):'')+(past.length?'<h2>Completed</h2>'+past.map(trRow).join(''):''))||'<p class="hint">No trainings yet. Add one above.</p>';
+}
+$('tAdd').onclick=()=>{
+  const title=$('tTitle').value.trim(), date=$('tDate').value, st=$('tStart').value, en=$('tEnd').value;
+  if(!title||!date||!st||!en){ $('tMsg').textContent='Fill in the name, date, start time and end time.'; return; }
+  if(st===en){ $('tMsg').textContent='Start and end times are the same. Check the times.'; return; }
+  const r={id:Date.now()+'-'+Math.floor(Math.random()*1000),title:title,date:date,start:st,end:en};
+  TR.push(r); saveTr(); $('tTitle').value=''; $('tMsg').textContent='Added ('+hm(dur(r))+').'; renderTrain(); render();
+};
+$('tList').onclick=e=>{
+  const b=e.target.closest('button[data-x]'); if(!b||!confirm('Remove this training?')) return;
+  TR=TR.filter(r=>r.id!==b.dataset.x); saveTr(); renderTrain(); render();
+};
+function tab(n){
+  $('vSched').hidden=n!=='s'; $('vTrain').hidden=n!=='t';
+  $('tabS').setAttribute('aria-pressed',n==='s'); $('tabT').setAttribute('aria-pressed',n==='t');
+  if(n==='t') renderTrain();
+}
+$('tabS').onclick=()=>tab('s'); $('tabT').onclick=()=>tab('t');
+
+let cur=0;
+$('grid').onclick=e=>{ const c=e.target.closest('.c'); if(!c) return; cur=+c.dataset.d;
+  const ch=!!O[key(vm.y,vm.m,cur)], sc=work(vm.y,vm.m,cur);
+  $('dtitle').textContent=fmt(vm.y,vm.m,cur)+': '+(ch?(sc?'day off (changed from your schedule)':'extra shift (added)'):(sc?'scheduled to work':'scheduled off'));
+  $('dflip').textContent=ch?'Back to normal schedule':(sc?'Mark as day off':'Mark as extra shift');
+  $('dlg').showModal(); };
+$('dflip').onclick=()=>{ const k=key(vm.y,vm.m,cur); if(O[k]) delete O[k]; else O[k]=1;
+  try{ localStorage.setItem(OK,JSON.stringify(O)); }catch(e){}
+  $('dlg').close(); render(); };
+$('dclose').onclick=()=>$('dlg').close();
+
+fill(); $('setup').open=!saved; render();
+if('serviceWorker' in navigator){ addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{})); }
+</script>
+</body>
+</html>
