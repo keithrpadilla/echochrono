@@ -88,7 +88,7 @@ select,input{width:100%;min-height:44px;font:inherit;padding:0 10px;border-radiu
 <details id="setup">
   <summary>Schedule setup</summary>
   <label for="agencyIn">Name shown on top (optional)</label>
-  <input id="agencyIn" maxlength="40" autocomplete="off">
+  <input id="agencyIn" maxlength="40" autocomplete="off" placeholder="Your agency or name (optional)">
   <label for="preset">Pattern</label>
   <select id="preset"></select>
   <div id="cwrap">
@@ -134,7 +134,7 @@ if(!saved){
   const mon=new Date(today.y,today.m,today.d-((T.getDay()+6)%7));
   S={preset:'2-2-3 (12-hour)',custom:'',start:mon.getFullYear()+'-'+pad(mon.getMonth()+1)+'-'+pad(mon.getDate())};
 }
-if(S.agency===undefined) S.agency='KENDALL COUNTY SHERIFF';
+if(S.agency===undefined) S.agency='';
 S.shift=S.shift||'W'; S.dayS=S.dayS||'06:00'; S.dayE=S.dayE||'18:00'; S.nightS=S.nightS||'18:00'; S.nightE=S.nightE||'06:00';
 const pat=()=>S.preset===CUSTOM?clean(S.custom):(PRE[S.preset]||'').replace(/W/g,S.shift||'W');
 
